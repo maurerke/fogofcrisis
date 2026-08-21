@@ -1,5 +1,14 @@
 # Fog of Crisis — Serious-Game
 
+**In brief.** Fog of Crisis is a browser-based serious game built as the research instrument
+for a master's thesis (M.Sc. Cyber Security, IU International University of Applied Sciences).
+It was used in a randomized between-subjects experiment studying how simulated disinformation
+pressure (a smartphone media feed with embedded false reports) affects the quality and speed of
+decisions, and the perceived cognitive load, during a simulated cyber incident response
+(ransomware scenario). The codebase is a TypeScript monorepo: a React/Vite frontend, an
+Express/Socket.IO backend with SQLite persistence, and a shared types package. Data collection
+concluded on 20 July 2026. The detailed documentation below is in German.
+
 ---
 
 ## Forschungskontext
@@ -47,7 +56,7 @@ Medienfeed-Items, Entscheidungsübermittlung) läuft über Socket.IO. Persistier
 ## Szenario und experimentelles Design
 
 Das Szenario simuliert einen Ransomware-Vorfall bei einem fiktiven Stadtwerk über 5 Phasen
-(`scenarios/ransomware_stadtwerke.json`, Addendum für Phase F wird automatisch nachgeladen). Phase 1
+(`scenarios/ransomware_stadtwerke.json`, Addendum wird automatisch nachgeladen). Phase 1
 ist bewusst eindeutig gehalten (Kalibrierung), echte Zielkonflikte treten in den Phasen 2–5 auf.
 
 | Gruppe | Unterschied |
@@ -59,11 +68,21 @@ Die Gruppenzuteilung erfolgt automatisch (alternierend) beim Session-Join. Incid
 Entscheidungsoptionen, Zeitlimits und UI sind für beide Gruppen identisch — der Medienfeed ist die
 einzige systematische Differenz zwischen den Bedingungen.
 
+## Eigenes Szenario
+
+Das Szenario ist nicht hart kodiert, sondern liegt vollständig als JSON in `scenarios/`. Die Engine
+lädt beim Start die unter `SCENARIO_PATH` angegebene Datei und prüft sie gegen den `Scenario`-Typ
+(`packages/shared/src/types.ts`), ein optionales `<name>_events_addendum.json` wird per
+Namenskonvention automatisch dazugemischt. Für ein eigenes Szenario genügt eine neue JSON-Datei nach
+diesem Schema (Briefing, Phasen mit Entscheidungen und Events, optionaler Medienfeed, Debriefing,
+Expertenpfad), `SCENARIO_PATH` darauf zeigen lassen und referenzierte Medienbilder unter
+`packages/frontend/public/` ablegen - ohne Eingriff in den Code. Fehlende oder inkonsistente Felder
+meldet die Startvalidierung konkret.
+
 ## Datenschutz
 
 Die Studie erhebt pseudonymisierte personenbezogene Daten (Demografie, Entscheidungsverhalten,
-Interaktionsdaten, Fragebogenantworten). Details zu Rechtsgrundlage, erhobenen Daten,
-Speicherdauer und Betroffenenrechten siehe **[PRIVACY.md](./PRIVACY.md)**.
+Interaktionsdaten, Fragebogenantworten) auf Grundlage einer informierten Einwilligung.
 
 Die produktive SQLite-Datenbank mit Studiendaten ist **nicht** Teil dieses Repositories
 (`.gitignore`: `data/`, `*.sqlite`).
