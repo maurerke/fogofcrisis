@@ -1,0 +1,504 @@
+{
+  "_comment": "Event-Addendum zum Szenario ransomware_stadtwerke_v2. Erweitert den Mail-Fluss pro Phase auf 5-7 Meldungen (Plass 2015: konsistente Engagement-Dichte; Klein 2006 RPD: ausreichend Signale für Sense-Making). Gruppe A und B erhalten exakt diesen Satz identisch (Methoden-Guardrail). Der Loader soll diese Events per phaseId in incomingEvents mergen und nach delaySeconds sortieren. Zusätzlich enthält das Addendum getriggerte Konsequenz-Events (evt_cons_*): Sie tragen einen trigger (phaseId+optionId) und werden NICHT zeitgesteuert, sondern erst nach der jeweiligen Entscheidung ausgeliefert. Sie zeigen die realen Folgekosten der gewählten Option und gelten für BEIDE Gruppen identisch (Teil des gemeinsamen Incident-Kanals, kein Bestandteil der A/B-Manipulation). Platziert sind sie in der jeweils FOLGENDEN Phase, damit der Loader sie dort einmischt.",
+  "_version": "v4-events-and-consequences",
+  "_attachedTo": "ransomware_stadtwerke_v2",
+  "additions": {
+    "phase_1_erstmeldung": [
+      {
+        "id": "evt_1_add_1",
+        "delaySeconds": 25,
+        "type": "email",
+        "source": "NOC / Schichtleitung",
+        "severity": "warning",
+        "title": "Viele Login-Fehlschläge auf Domain-Controller DC-02",
+        "body": "Seit 05:47 Uhr steigende Zahl fehlgeschlagener Anmeldungen an DC-02. Muster: sequentielle Accounts (a.becker, b.becker, c.becker...). Vermutlich Credential-Spraying. Keine erfolgreiche Anmeldung festgestellt. Monitoring läuft.",
+        "metadata": {
+          "Quelle": "Graylog Dashboard NOC-SEC",
+          "Betroffener Host": "DC-02",
+          "Fehlschläge/min": "ca. 280"
+        }
+      },
+      {
+        "id": "evt_1_add_2",
+        "delaySeconds": 95,
+        "type": "chat_message",
+        "source": "Anruf Bürgermeisterbüro",
+        "severity": "info",
+        "title": "Anfrage aus dem Bürgermeisterbüro",
+        "body": "Frau Zeller (Büro des Oberbürgermeisters) fragt an, ob Berichte aus sozialen Medien über einen Stromausfall korrekt sind. Aktuell keine Versorgungsstörung, Anfrage aber dokumentieren.",
+        "metadata": {
+          "Kanal": "Telefon Sekretariat",
+          "Rückrufnummer": "0234 / 110-0"
+        }
+      },
+      {
+        "id": "evt_1_add_3",
+        "delaySeconds": 135,
+        "type": "report",
+        "source": "IT-Forensik (extern)",
+        "severity": "info",
+        "title": "Forensik-Dienstleister bestätigt Reaktionsbereitschaft",
+        "body": "Der Rahmenvertragspartner bestätigt die Aktivierung. Zwei Forensiker sind in 3h 45min vor Ort. Bitte Systemlogs der letzten 14 Tage bereitstellen und Schreibzugriffe auf FS-ADM-* deaktivieren, sobald eine Isolationsentscheidung getroffen wurde.",
+        "metadata": {
+          "Ticket": "FOR-2026-0417",
+          "Ansprechpartner": "M. Ortmann"
+        }
+      }
+    ],
+    "phase_2_eskalation": [
+      {
+        "id": "evt_2_add_1",
+        "delaySeconds": 30,
+        "type": "system_alert",
+        "source": "OT-Firewall",
+        "severity": "critical",
+        "title": "Auffällige Pakete in Richtung SCADA-Subnetz",
+        "body": "Die OT-Firewall meldet mehrere SMB-Verbindungsversuche aus dem Verwaltungsnetz in Richtung 10.42.0.0/24 (SCADA Wasserwerk Nord). Keine bislang erfolgreiche Session, aber steigende Frequenz.",
+        "metadata": {
+          "Quelle": "FW-OT-01",
+          "Ziel": "10.42.0.14 (HMI-Server)",
+          "Blockierte Versuche": "162 in 6 Minuten"
+        }
+      },
+      {
+        "id": "evt_cons_1a",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 4,
+        "trigger": {
+          "phaseId": "phase_1_erstmeldung",
+          "optionId": "dec_1_opt_a"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — IT-Leitung",
+        "severity": "info",
+        "title": "Isolation umgesetzt — Verwaltungsbetrieb steht still",
+        "body": "Die Netzwerkisolation wurde vollzogen. Die laterale Ausbreitung ist gestoppt; das OT-Netz blieb unberührt. Gleichzeitig sind ab sofort alle Verwaltungs-Arbeitsplätze, das Kundenportal und die VoIP-Telefonie außer Betrieb. Der Eingangsbereich meldet erste verunsicherte Mitarbeitende.",
+        "metadata": {
+          "Ausbreitung": "gestoppt",
+          "OT-Netz": "nicht kompromittiert",
+          "Verwaltung": "offline (geplant)"
+        }
+      },
+      {
+        "id": "evt_cons_1b",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 4,
+        "trigger": {
+          "phaseId": "phase_1_erstmeldung",
+          "optionId": "dec_1_opt_b"
+        },
+        "type": "system_alert",
+        "source": "Folge Ihrer Entscheidung — SIEM-System",
+        "severity": "critical",
+        "title": "Während der Analysephase: Ausbreitung auf weitere Server",
+        "body": "Während das IT-Team das Ausmaß analysiert, hat die Ransomware vier weitere Dateiserver erreicht. Das SIEM meldet zudem einen ersten Verbindungsaufbau über den Jumpserver JS-BRIDGE-01 in Richtung OT-Netz. Die Analyse liefert ein genaueres Bild, doch der Schaden ist in der Zwischenzeit gewachsen.",
+        "metadata": {
+          "Neu betroffen": "FS-ADM-04, FS-ADM-05, FS-FIN-01, FS-FIN-02",
+          "OT-Brücke": "erster Verbindungsversuch registriert"
+        }
+      },
+      {
+        "id": "evt_cons_1c",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 4,
+        "trigger": {
+          "phaseId": "phase_1_erstmeldung",
+          "optionId": "dec_1_opt_c"
+        },
+        "type": "email",
+        "source": "Folge Ihrer Entscheidung — Geschäftsleitung",
+        "severity": "warning",
+        "title": "Freigabe erteilt — mit Zeitverzug",
+        "body": "Die Geschäftsleitung wurde informiert und hat die Netzwerkisolation freigegeben. Bis zur Rückmeldung vergingen rund elf Minuten. Das SIEM meldet für diesen Zeitraum eine fortgesetzte Verschlüsselung weiterer Systeme. Die Entscheidung ist nun formal abgesichert, die technische Eindämmung beginnt verspätet.",
+        "metadata": {
+          "Freigabe": "erteilt",
+          "Zeitverzug": "ca. 11 Minuten",
+          "Folge": "Verschlüsselung in diesem Zeitraum fortgesetzt"
+        }
+      },
+      {
+        "id": "evt_2_add_2",
+        "delaySeconds": 90,
+        "type": "email",
+        "source": "Betriebsrat",
+        "severity": "info",
+        "title": "Frage zur Entlohnung bei Betriebsausfall",
+        "body": "Falls Mitarbeitende nach Hause geschickt werden müssen: der Betriebsrat bittet um eine schriftliche Bestätigung, dass Lohnfortzahlung geleistet wird. Bitte HR einbinden.",
+        "metadata": {
+          "Absender": "br@stadtwerke-musterstadt.de"
+        }
+      },
+      {
+        "id": "evt_2_add_3",
+        "delaySeconds": 140,
+        "type": "phone_call",
+        "source": "BSI MIRT",
+        "severity": "warning",
+        "title": "Rückruf vom BSI Meldestelle",
+        "body": "Das BSI bestätigt den Eingang der Meldung nach KRITIS-Verordnung. Hinweis: Die beobachtete SMB-Verbreitung ähnelt der Gruppe TA-CLOP. Falls bestätigt, sollte die Wiederherstellung ohne Netz-Verbindung erfolgen, da Backups kompromittiert sein können.",
+        "metadata": {
+          "Vorgangs-ID": "BSI-MIRT-2026-0339"
+        }
+      },
+      {
+        "id": "evt_2_add_4",
+        "delaySeconds": 170,
+        "type": "report",
+        "source": "Leitwarte Wasserwerk",
+        "severity": "info",
+        "title": "Wasserreserve und Druckkurve stabil",
+        "body": "Die Schichtleitung meldet: Druckkurven an den Pumpstationen unauffällig, Reserve ausreichend für mindestens 32h Vollversorgung ohne SCADA-Zugriff. Manueller Notbetrieb ist vorbereitet.",
+        "metadata": {
+          "Reserve": "32h 15min",
+          "Modus": "ferngesteuert (noch)"
+        }
+      },
+      {
+        "id": "evt_2_rec_1",
+        "delaySeconds": 185,
+        "type": "email",
+        "source": "IT-Leitung / Krisenkoordination",
+        "severity": "warning",
+        "title": "Interne Einschätzung zur Isolationsstrategie",
+        "body": "Wir sehen im Moment drei realistische Pfade:\n\nOption A (Volltrennung) stoppt die Ausbreitung sofort und schützt alle OT-Segmente. Kehrseite: Krisenstab, Forensiker und NOC verlieren ab sofort jede digitale Koordinationsgrundlage — alles läuft über Telefon und Boten. Erfahrungswerte aus vergleichbaren Vorfällen zeigen, dass das die Recovery-Zeit spürbar verlängert.\n\nOption B (segmentierte Isolation) hält die kritische Koordinationsfähigkeit aufrecht und lässt Backup-Systeme online. Das funktioniert aber nur, wenn die Segmentgrenzen dicht halten — ist das OT-Segment Wasser/Strom bereits kompromittiert, ist dieser Vorteil hinfällig.\n\nOption C (forensische Beobachtung) erzeugt das beste Lagebild, verlängert jedoch das Zeitfenster, in dem die Ransomware aktiv Daten verschlüsseln oder exfiltrieren kann.\n\nEmpfehlung: Wir tendieren zu B als Kompromiss zwischen Eindämmung und Handlungsfähigkeit — sofern keine Hinweise auf eine bereits erfolgte OT-Querung vorliegen. Die finale Entscheidung liegt bei Ihnen.",
+        "metadata": {
+          "Klassifikation": "Intern — Krisenstab",
+          "Antwort an": "krisenkoordination@stadtwerke-musterstadt.de"
+        }
+      }
+    ],
+    "phase_3_kommunikation": [
+      {
+        "id": "evt_3_add_1",
+        "delaySeconds": 25,
+        "type": "email",
+        "source": "Lokaler Rundfunk Radio Musterstadt",
+        "severity": "warning",
+        "title": "Anfrage für Live-Statement im 14-Uhr-Journal",
+        "body": "Redaktion bittet um kurzes Statement zu einem in Social Media zirkulierenden Video, das angeblich ausgefallene Leitungen zeigt. Deadline 13:45 Uhr.",
+        "metadata": {
+          "Redakteur": "K. Arendt",
+          "Deadline": "13:45"
+        }
+      },
+      {
+        "id": "evt_cons_2a",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_2_eskalation",
+          "optionId": "dec_2_opt_a"
+        },
+        "type": "chat_message",
+        "source": "Folge Ihrer Entscheidung — Krisenstab",
+        "severity": "warning",
+        "title": "Volltrennung umgesetzt — Krisenstab arbeitet jetzt offline",
+        "body": "Sämtliche Segmente sind getrennt. Eine weitere Ausbreitung ist ausgeschlossen. Der Krisenstab koordiniert ab sofort ausschließlich per Telefon und Boten: keine gemeinsame Lageübersicht, kein direkter Zugriff der Forensiker auf die Systeme, Backup-Einspielung nur lokal vor Ort. Mehrere Abstimmungen verzögern sich.",
+        "metadata": {
+          "Ausbreitung": "ausgeschlossen",
+          "Koordination": "nur Telefon / Bote",
+          "Forensik-Zugriff": "eingeschränkt"
+        }
+      },
+      {
+        "id": "evt_cons_2b",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_2_eskalation",
+          "optionId": "dec_2_opt_b"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — NOC",
+        "severity": "info",
+        "title": "Segmentierung steht — OT-Segmente Strom und Fernwärme gesichert",
+        "body": "Die segmentierte Isolation wurde umgesetzt. Strom- und Fernwärme-OT sind sauber abgetrennt und unauffällig. Das kompromittierte Verwaltungsnetz und das Wasser-SCADA sind gemeinsam eingegrenzt. Die Backup-Systeme laufen in einem separaten, sauberen Segment. Der Krisenstab behält seine digitale Koordinationsfähigkeit.",
+        "metadata": {
+          "OT Strom/Fernwärme": "gesichert",
+          "Backup-Segment": "online",
+          "Koordination": "funktionsfähig"
+        }
+      },
+      {
+        "id": "evt_3_add_2",
+        "delaySeconds": 70,
+        "type": "chat_message",
+        "source": "Krisenkommunikations-Abteilung",
+        "severity": "info",
+        "title": "Sprachregelungs-Vorschlag liegt vor",
+        "body": "Entwurf für Pressemitteilung und FAQ angehängt. Enthält bewusst keine Details zum Angriffsvektor, um laufende Forensik nicht zu gefährden. Bitte bis 14:00 Uhr freigeben oder Korrekturen markieren.",
+        "metadata": {
+          "attachments": "2"
+        }
+      },
+      {
+        "id": "evt_3_add_3",
+        "delaySeconds": 110,
+        "type": "report",
+        "source": "Monitoring Social Media",
+        "severity": "warning",
+        "title": "Viralität steigt — zwei widersprüchliche Narrative",
+        "body": "Narrativ A: 'Stadtwerke verschweigen Cyberangriff' (ca. 8.400 Interaktionen). Narrativ B: 'angeblicher Hacker im Interview behauptet Trinkwasser-Kontamination' (ca. 12.100 Interaktionen, Quelle unverifiziert). Beide Narrative könnten durch eine schnelle, faktenbasierte Stellungnahme gedämpft werden.",
+        "metadata": {
+          "Tool": "Talkwalker Monitoring",
+          "Zeitraum": "letzte 60 Minuten"
+        }
+      },
+      {
+        "id": "evt_3_rec_1",
+        "delaySeconds": 155,
+        "type": "email",
+        "source": "Krisenkommunikations-Beraterin (extern)",
+        "severity": "info",
+        "title": "Kommunikationsstrategie — kurze Lageeinschätzung",
+        "body": "Aus Kommunikationssicht haben Sie jetzt drei Pfade, die unterschiedliche Risiken tragen:\n\nProaktive Öffentlichkeitsarbeit setzt das eigene Framing früh — das schließt das Informationsvakuum und lässt weniger Raum für Gerüchte. Risiko: Sie kommunizieren unter Zeitdruck, bevor alle Fakten gesichert sind. Eine spätere Korrektur erzeugt Glaubwürdigkeitsverlust.\n\nSelektive Stakeholder-Kommunikation erfüllt Meldepflichten und hält Bürgermeister und BSI informiert, lässt aber die öffentliche Lücke offen. Diese Lücke füllen derzeit Gerüchte mit hoher Reichweite — die Zeit, bis eine spätere Stellungnahme das dominante Narrativ wieder zurückgewinnen kann, wächst mit jeder Stunde.\n\nÖffentliches Schweigen ist die risikoreichste Option aus Reputationssicht: erfahrungsgemäß verstärkt es Vertrauensverlust und bietet Angriffsfläche für Vorwürfe einer Vertuschung. Auch die BSI-Meldepflicht läuft weiter.\n\nEmpfehlung: Tendenz zu proaktiver Kommunikation mit klarem Vorbehalt — nur bestätigte Fakten, kein Spekulieren über Angriffsvektor. Abwägung Ihrer Risikopräferenz ist aber entscheidend.",
+        "metadata": {
+          "Klassifikation": "Intern — Krisenstab",
+          "Fachgebiet": "Krisen-PR / Unternehmenskommunikation"
+        }
+      }
+    ],
+    "phase_4_loesegeldforderung": [
+      {
+        "id": "evt_4_add_1",
+        "delaySeconds": 20,
+        "type": "email",
+        "source": "Angreifer (Tor-Rückkanal)",
+        "severity": "critical",
+        "title": "Lösegeldforderung — Countdown 72h",
+        "body": "Die Angreifer fordern 4,2 Mio. EUR in Monero. Beweis: sie haben ausgewählte Dateistichproben veröffentlicht. Drohung: Veröffentlichung aller exfiltrierten Daten nach 72h. Kontakt ausschließlich über angegebenes Tor-Portal.",
+        "metadata": {
+          "Forderung": "4.200.000 EUR (XMR)",
+          "Frist": "72h",
+          "Sample": "sample_hr_invoices.zip (42 MB)"
+        }
+      },
+      {
+        "id": "evt_cons_3a",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_3_kommunikation",
+          "optionId": "dec_3_opt_a"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — Monitoring Social Media",
+        "severity": "info",
+        "title": "Nach der Pressemitteilung: Spekulationen gehen zurück",
+        "body": "Seit der proaktiven Pressemitteilung sinkt die Reichweite der Gerüchte-Narrative messbar. Etablierte Medien zitieren die offizielle Stellungnahme statt unbestätigter Quellen. Einzelne kritische Nachfragen zur Reaktionszeit bleiben, das Informationsvakuum ist jedoch weitgehend geschlossen.",
+        "metadata": {
+          "Gerüchte-Reichweite": "rückläufig",
+          "Medienzitate": "überwiegend offizielle Quelle"
+        }
+      },
+      {
+        "id": "evt_cons_3b",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_3_kommunikation",
+          "optionId": "dec_3_opt_b"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — Monitoring Social Media",
+        "severity": "warning",
+        "title": "Stakeholder informiert — öffentliches Vakuum bleibt teilweise bestehen",
+        "body": "BSI-Meldung und Lagebriefing für den Bürgermeister sind erfolgt, die Pflicht-Adressaten sind informiert. In den sozialen Medien füllen jedoch weiterhin unbestätigte Beiträge die Lücke; der Verweis auf eine spätere Stellungnahme dämpft die Dynamik, beendet sie aber nicht.",
+        "metadata": {
+          "Pflichtmeldungen": "erfüllt",
+          "Öffentliche Kommunikation": "aufgeschoben",
+          "Gerüchte-Dynamik": "gedämpft, nicht beendet"
+        }
+      },
+      {
+        "id": "evt_cons_3c",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_3_kommunikation",
+          "optionId": "dec_3_opt_c"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — Monitoring Social Media",
+        "severity": "critical",
+        "title": "Schweigen verschärft die Lage — Vertuschungs-Narrativ dominiert",
+        "body": "Ohne öffentliche Äußerung hat sich das Narrativ einer bewussten Vertuschung durchgesetzt und wird von einem Regionalmedium aufgegriffen. Die Interaktionszahlen der Gerüchte-Beiträge steigen weiter. Zusätzlich steht die Einhaltung der BSI-Meldepflicht nach §8b nun unter Beobachtung.",
+        "metadata": {
+          "Dominantes Narrativ": "'Vertuschung'",
+          "Gerüchte-Reichweite": "steigend",
+          "Meldepflicht §8b": "Einhaltung offen"
+        }
+      },
+      {
+        "id": "evt_4_add_2",
+        "delaySeconds": 70,
+        "type": "phone_call",
+        "source": "Staatsanwaltschaft ZAC NRW",
+        "severity": "warning",
+        "title": "Hinweis zur rechtlichen Bewertung",
+        "body": "Die ZAC weist darauf hin, dass Lösegeldzahlungen im Einzelfall strafrechtlich relevant sein können (Terrorismusfinanzierung / Geldwäsche). Empfehlung: vor Entscheidung unbedingt Rechtsabteilung und BSI einbinden. Ermittlungsverfahren ist eröffnet.",
+        "metadata": {
+          "Vorgang": "ZAC-2026-1187"
+        }
+      },
+      {
+        "id": "evt_4_add_3",
+        "delaySeconds": 130,
+        "type": "report",
+        "source": "Versicherung (Cyber-Policy)",
+        "severity": "info",
+        "title": "Deckung geklärt: 2,5 Mio. EUR",
+        "body": "Die Cyber-Police deckt Lösegeld bis 2,5 Mio. EUR ab, vorausgesetzt Sanktionslisten-Prüfung ist negativ und Forensik-Bericht liegt vor. Selbstbeteiligung: 250.000 EUR.",
+        "metadata": {
+          "Policy": "CYB-2025-04881"
+        }
+      },
+      {
+        "id": "evt_4_add_4",
+        "delaySeconds": 175,
+        "type": "chat_message",
+        "source": "IT-Forensik (extern)",
+        "severity": "info",
+        "title": "Backup-Prüfung abgeschlossen",
+        "body": "Das 48h-alte Backup ist sauber (kein Malware-Trace) und kann zur Wiederherstellung genutzt werden. Geschätzter Restore-Aufwand: 18-24h für geschäftskritische Systeme.",
+        "metadata": {
+          "Restore-ETA": "18-24h"
+        }
+      },
+      {
+        "id": "evt_4_rec_1",
+        "delaySeconds": 190,
+        "type": "email",
+        "source": "Interner Rechts- und Sicherheitskoordinator",
+        "severity": "warning",
+        "title": "Abwägung zur Reaktionsstrategie — Lösegeldforderung",
+        "body": "Zur aktuellen Forderung bestehen drei Reaktionspfade — ich fasse die wesentlichen Abwägungen kurz zusammen:\n\nZahlung prüfen: Die Versicherung deckt bis 2,5 Mio. EUR ab, die Differenz (rund 1,7 Mio.) verbleibt beim Unternehmen. Strafrechtlich ist die Zahlung möglicherweise riskant (Terrorismusfinanzierung / Geldwäsche — ZAC-Hinweis liegt vor). Zudem gibt es keine Garantie, dass ein Entschlüsselungswerkzeug funktioniert oder keine Backdoor enthält.\n\nKategorische Ablehnung setzt das stärkste Signal gegen zukünftige Angriffe, legt uns aber auf den Backup-Wiederherstellungsweg fest. Die Drohung einer Datenveröffentlichung bleibt bestehen — Reputationsrisiko bleibt real.\n\nLKA-geführte Verhandlung schafft Zeitgewinn und Intelligence, ohne sofort zu zahlen. Risiko: verlängerte Ungewissheit, gebundene LKA-Kapazitäten, mögliche Eskalation durch die Angreifer, wenn kein Entgegenkommen signalisiert wird.\n\nUnsere Tendenz: LKA-Verhandlung als Brückenoption, parallel Backup-Recovery vorantreiben. Letztlich ist das eine Entscheidung, die die Geschäftsleitung verantworten muss.",
+        "metadata": {
+          "Klassifikation": "Intern — streng vertraulich",
+          "Bezug": "ZAC-2026-1187, CYB-2025-04881"
+        }
+      }
+    ],
+    "phase_5_recovery": [
+      {
+        "id": "evt_5_add_1",
+        "delaySeconds": 20,
+        "type": "report",
+        "source": "IT-Team",
+        "severity": "info",
+        "title": "Wiederherstellungsplan Phase 1 steht",
+        "body": "Priorisierung festgelegt: 1) Domain-Controller isoliert neu aufbauen, 2) Dateiserver FS-ADM-*, 3) E-Mail-System, 4) Fachverfahren Abrechnung. Alle wiederhergestellten Systeme erhalten ein Patchlevel-Baseline-Check.",
+        "metadata": {
+          "Plan-Version": "WP-1.2"
+        }
+      },
+      {
+        "id": "evt_cons_4a",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_4_loesegeldforderung",
+          "optionId": "dec_4_opt_a"
+        },
+        "type": "phone_call",
+        "source": "Folge Ihrer Entscheidung — Rechtsabteilung",
+        "severity": "warning",
+        "title": "Kanal zu den Angreifern geöffnet — rechtliche Bedenken",
+        "body": "Die Kontaktaufnahme über das Tor-Portal ist erfolgt. Die Angreifer werten dies als Zahlungsbereitschaft und setzen die Frist unter Verweis darauf nicht aus. Die Rechtsabteilung weist erneut auf die strafrechtlichen Risiken einer Zahlung hin und mahnt die Einbindung von BSI und Staatsanwaltschaft an.",
+        "metadata": {
+          "Kanal": "geöffnet",
+          "Signalwirkung": "Zahlungsbereitschaft",
+          "Rechtslage": "ungeklärt"
+        }
+      },
+      {
+        "id": "evt_cons_4b",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_4_loesegeldforderung",
+          "optionId": "dec_4_opt_b"
+        },
+        "type": "report",
+        "source": "Folge Ihrer Entscheidung — Krisenstab",
+        "severity": "info",
+        "title": "Ablehnung kommuniziert — Fokus liegt auf der Wiederherstellung",
+        "body": "Die Position 'keine Zahlung' ist intern festgelegt und gegenüber LKA und BSI bestätigt. Es findet keine Kommunikation mit den Angreifern statt. Die Drohung einer Datenveröffentlichung bleibt bestehen; alle Ressourcen sind nun auf die Backup-Wiederherstellung und die Information Betroffener gerichtet.",
+        "metadata": {
+          "Position": "keine Zahlung",
+          "Recovery": "hat Priorität",
+          "Leak-Risiko": "bleibt bestehen"
+        }
+      },
+      {
+        "id": "evt_cons_4c",
+        "delaySeconds": 0,
+        "delayAfterTrigger": 5,
+        "trigger": {
+          "phaseId": "phase_4_loesegeldforderung",
+          "optionId": "dec_4_opt_c"
+        },
+        "type": "phone_call",
+        "source": "Folge Ihrer Entscheidung — LKA Cybercrime",
+        "severity": "info",
+        "title": "LKA führt Verhandlung — Zeitgewinn, aber gebundene Ressourcen",
+        "body": "Das LKA hat die Kommunikation mit den Angreifern übernommen. Die Verhandlung dient dem Zeitgewinn und der Intelligence-Sammlung, nicht der Zahlung. Erste Hinweise zur Tätergruppe wurden gewonnen. Die Unsicherheitsphase verlängert sich, solange die Verhandlung läuft.",
+        "metadata": {
+          "Verhandlungsführung": "LKA",
+          "Ziel": "Zeitgewinn / Intelligence",
+          "Backup-Recovery": "läuft parallel"
+        }
+      },
+      {
+        "id": "evt_5_add_2",
+        "delaySeconds": 65,
+        "type": "email",
+        "source": "Datenschutzbeauftragte",
+        "severity": "warning",
+        "title": "DSGVO-Meldung Art. 33 innerhalb 72h erforderlich",
+        "body": "Personenbezogene Daten sind laut Beweisstichprobe der Angreifer betroffen (HR-Rechnungen). Die Aufsichtsbehörde ist innerhalb 72h zu informieren. Ein Entwurf liegt bei.",
+        "metadata": {
+          "Frist": "72h ab Kenntnis",
+          "attachments": "1"
+        }
+      },
+      {
+        "id": "evt_5_add_3",
+        "delaySeconds": 110,
+        "type": "report",
+        "source": "Kundenservice-Hotline",
+        "severity": "info",
+        "title": "Anruf-Aufkommen normalisiert sich",
+        "body": "Nach der Pressemitteilung 15:30 Uhr sinkt das Anrufaufkommen von ca. 220 Anrufen/h auf ca. 90/h. Themen: Trinkwasser-Qualität (73%), Rechnungsverzug (21%), sonstiges.",
+        "metadata": {
+          "Zeitraum": "letzte 30 Minuten"
+        }
+      },
+      {
+        "id": "evt_5_add_4",
+        "delaySeconds": 155,
+        "type": "chat_message",
+        "source": "Aufsichtsrat",
+        "severity": "warning",
+        "title": "Sondersitzung morgen 09:00 Uhr",
+        "body": "Der Aufsichtsrat bittet um einen schriftlichen Bericht (max. 4 Seiten) zu Ursachen, Entscheidungen und Folgekosten. Zustellung 08:00 Uhr, Präsentation um 09:00 Uhr.",
+        "metadata": {
+          "Adressat": "aufsichtsrat@stadtwerke-musterstadt.de"
+        }
+      },
+      {
+        "id": "evt_5_rec_1",
+        "delaySeconds": 170,
+        "type": "email",
+        "source": "IT-Forensik (extern) / Wiederherstellungskoordination",
+        "severity": "info",
+        "title": "Einschätzung zur Recovery-Priorisierung",
+        "body": "Das Backup ist sauber, die Systeme lassen sich wiederherstellen — die Frage ist die Reihenfolge:\n\nWasserversorgung zuerst (manuelle Chlordosierung, Druckkurven) adressiert das unmittelbare Sicherheitsrisiko für die Bevölkerung. Nachteil: IT-Kernsysteme bleiben offline; Krisenkommunikation, Abrechnung und Koordination laufen weiter auf Notbetrieb.\n\nIT-Kernsysteme zuerst (Domain-Controller, E-Mail, Koordinationsinfrastruktur) stellt die organisationale Handlungsfähigkeit wieder her. Die Wasserversorgung läuft im Notbetrieb weiter — laut Leitwarte noch mindestens einige Stunden stabil — aber der manuelle Betrieb ist personalintensiv und fehleranfällig.\n\nParalleler Ansatz versucht beides gleichzeitig. Der Vorteil liegt in der Geschwindigkeit; das Risiko: Teams werden aufgeteilt, Abstimmungsaufwand steigt, bei unvorhergesehenen Problemen fehlen Kapazitäten, schnell umzupriorisieren.\n\nWir sehen in allen drei Pfaden vertretbare Gründe — die Wahl hängt davon ab, wie hoch Sie das Restrisiko im Wasserbereich einschätzen und wie belastbar die Teams aktuell sind.",
+        "metadata": {
+          "Klassifikation": "Intern — Krisenstab",
+          "Backup-Status": "sauber, Restore-ETA 18-24h (gesamt)"
+        }
+      }
+    ]
+  }
+}

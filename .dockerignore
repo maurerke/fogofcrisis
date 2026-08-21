@@ -1,0 +1,10 @@
+node_modules
+dist
+data
+.git
+.env
+*.sqlite
+*.sqlite-journal
+*.md
+!package.json
+!tsconfig*.json

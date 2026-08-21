@@ -1,0 +1,1095 @@
+{
+  "id": "ransomware_stadtwerke_v2",
+  "title": "Ransomware-Angriff auf die Stadtwerke Musterstadt",
+  "description": "Ein Ransomware-Angriff trifft die IT-Infrastruktur der Stadtwerke Musterstadt und gefährdet die kritische Infrastruktur der Wasserversorgung.",
+  "version": "2.0.0",
+  "estimatedDurationMinutes": 25,
+  "briefing": {
+    "role": "Leitung des Krisenstabs der Stadtwerke Musterstadt",
+    "situation": "Es ist Dienstagmorgen, 07:45 Uhr. Sie wurden soeben über ungewöhnliche Aktivitäten in den IT-Systemen der Stadtwerke Musterstadt informiert. Die Stadtwerke versorgen 120.000 Einwohner mit Wasser, Strom und Fernwärme. Als Leitung des Krisenstabs müssen Sie nun zeitkritische Entscheidungen treffen, um den Vorfall zu bewältigen und die Versorgungssicherheit zu gewährleisten.",
+    "objectives": [
+      "Sicherstellung der öffentlichen Versorgung (Wasser, Strom, Fernwärme)",
+      "Eindämmung des Cyberangriffs und Schutz noch nicht betroffener Systeme",
+      "Koordination der internen und externen Kommunikation",
+      "Wiederherstellung der betroffenen IT-Systeme",
+      "Dokumentation aller Entscheidungen und Maßnahmen"
+    ],
+    "resources": [
+      "Internes IT-Team (5 Personen, 2 davon mit Security-Erfahrung)",
+      "NOC (Network Operations Center) — 24/7 besetzt",
+      "BSI-Hotline für kritische Infrastrukturen",
+      "Externer IT-Forensik-Dienstleister (Rahmenvertrag vorhanden, Reaktionszeit ca. 4h)",
+      "Krisenkommunikations-Abteilung (2 Personen)",
+      "Offline-Backup-Systeme (letztes vollständiges Backup: 48h alt)"
+    ]
+  },
+  "phases": [
+    {
+      "id": "phase_1_erstmeldung",
+      "title": "Erstmeldung",
+      "timeLimitSeconds": 180,
+      "incomingEvents": [
+        {
+          "id": "evt_1_1",
+          "delaySeconds": 0,
+          "type": "system_alert",
+          "source": "SIEM-System",
+          "severity": "warning",
+          "title": "Ungewöhnliche Verschlüsselungsaktivität erkannt",
+          "body": "Das SIEM-System hat auf mehreren Servern im Verwaltungsnetz eine ungewöhnlich hohe Verschlüsselungsaktivität erkannt. Betroffen sind bisher 3 von 12 Dateiservern. Die Aktivität begann um 06:23 Uhr und nimmt stetig zu. Muster deuten auf Ransomware hin.",
+          "metadata": {
+            "Betroffene Server": "FS-ADM-01, FS-ADM-03, FS-HR-01",
+            "Beginn": "06:23 Uhr",
+            "Verschlüsselte Dateien": "ca. 47.000 (steigend)",
+            "Malware-Signatur": "Unbekannt (kein Match in Virendatenbank)"
+          }
+        },
+        {
+          "id": "evt_1_3",
+          "delaySeconds": 75,
+          "type": "email",
+          "source": "IT-Sicherheitsbeauftragter",
+          "severity": "critical",
+          "title": "Ransomware-Verdacht bestätigt — Sofortmaßnahmen nötig",
+          "body": "Nach erster Analyse bestätigt der IT-Sicherheitsbeauftragte: Es handelt sich mit hoher Wahrscheinlichkeit um einen Ransomware-Angriff. Die Schadsoftware verbreitet sich über das interne Netzwerk via SMB-Protokoll. Noch ist das OT-Netz (Steuerung Wasser/Strom) nicht betroffen, aber es gibt eine Netzwerkbrücke zwischen Verwaltungs- und OT-Netz über den Jumpserver JS-BRIDGE-01.",
+          "metadata": {
+            "Angriffsvektor": "Vermutlich Phishing-E-Mail (wird untersucht)",
+            "Verbreitung": "SMB/Lateral Movement",
+            "Jumpserver": "JS-BRIDGE-01 (Brücke zum OT-Netz)",
+            "Empfehlung": "Sofortige Isolation empfohlen"
+          }
+        },
+        {
+          "id": "evt_1_4",
+          "delaySeconds": 130,
+          "type": "phone_call",
+          "source": "NOC (Network Operations Center)",
+          "severity": "warning",
+          "title": "NOC meldet: Netzwerkverkehr zum Jumpserver ungewöhnlich hoch",
+          "body": "Das NOC beobachtet einen starken Anstieg des Datenverkehrs zwischen dem Verwaltungsnetz und dem Jumpserver JS-BRIDGE-01. Es werden große Datenmengen in Richtung OT-Netz übertragen. Der NOC-Techniker fragt, ob er den Jumpserver manuell herunterfahren soll oder auf Ihre Anweisung wartet.",
+          "metadata": {
+            "Traffic-Volumen": "~2.3 GB in den letzten 15 Minuten",
+            "Richtung": "Verwaltung → JS-BRIDGE-01 → OT",
+            "Normalwert": "< 50 MB/h",
+            "Jumpserver Status": "Online, erreichbar"
+          }
+        }
+      ],
+      "decision": {
+        "id": "dec_1",
+        "prompt": "Welche Sofortmaßnahme ergreifen Sie als erstes?",
+        "context": "Die Ransomware verbreitet sich aktiv im Verwaltungsnetz. Das OT-Netz (Wasser-/Stromsteuerung) ist noch nicht betroffen, aber über einen Jumpserver erreichbar. Sie müssen schnell handeln.",
+        "options": [
+          {
+            "id": "dec_1_opt_a",
+            "label": "Sofortige Netzwerkisolation",
+            "description": "Das Verwaltungsnetz wird sofort vom OT-Netz und dem Internet getrennt. Der Jumpserver JS-BRIDGE-01 wird heruntergefahren.",
+            "consequencePreview": "Stoppt die laterale Ausbreitung sofort. Preis: Die gesamte Verwaltung steht ohne Vorwarnung still — E-Mail, Telefonie über VoIP, Kundenportal und Abrechnung fallen aus. Mitarbeitende und Bürger erfahren es ungefiltert."
+          },
+          {
+            "id": "dec_1_opt_b",
+            "label": "Zunächst analysieren, dann gezielt isolieren",
+            "description": "Das IT-Team erhält 30 Minuten zur Analyse des Ausmaßes. Erst danach werden gezielte Isolationsmaßnahmen ergriffen.",
+            "consequencePreview": "Liefert ein präziseres Lagebild und vermeidet einen unnötig breiten Abschaltradius. Risiko: Die Ransomware bewegt sich in diesen 30 Minuten weiter — bei aktiver lateraler Bewegung kann das OT-Netz in dieser Zeit erreicht werden."
+          },
+          {
+            "id": "dec_1_opt_c",
+            "label": "Geschäftsleitung informieren und Freigabe einholen",
+            "description": "Bevor technische Maßnahmen ergriffen werden, wird die Geschäftsleitung über den Vorfall informiert und um Freigabe für Netzwerkisolation gebeten.",
+            "consequencePreview": "Sichert die Entscheidung formal ab und verteilt die Verantwortung. Die Freigabe kostet bei einer aktiv laufenden Bedrohung jedoch Zeit, in der keine technische Eindämmung stattfindet."
+          }
+        ],
+        "allowMultiple": false,
+        "requireConfirmation": true
+      }
+    },
+    {
+      "id": "phase_2_eskalation",
+      "title": "Eskalation",
+      "timeLimitSeconds": 210,
+      "incomingEvents": [
+        {
+          "id": "evt_2_1",
+          "delaySeconds": 0,
+          "type": "system_alert",
+          "source": "SCADA-Monitoring",
+          "severity": "critical",
+          "title": "Leitwarte Wasserversorgung — Verbindung unterbrochen",
+          "body": "Die Verbindung zur Leitwarte der Wasserversorgung ist abgebrochen. Die Pumpstationen laufen im Automatikbetrieb, aber es gibt keine Fernüberwachung mehr. Der Leitwartenrechner zeigt eine Verschlüsselungsmeldung auf dem Bildschirm. Ein Techniker vor Ort berichtet per Mobiltelefon.",
+          "metadata": {
+            "Betroffenes System": "SCADA-HMI-WATER-01",
+            "Status Pumpen": "Automatikbetrieb (ohne Überwachung)",
+            "Wasserreserve": "ca. 18 Stunden bei normalem Verbrauch",
+            "Manueller Betrieb": "Möglich, erfordert Vor-Ort-Personal"
+          }
+        },
+        {
+          "id": "evt_2_3",
+          "delaySeconds": 90,
+          "type": "phone_call",
+          "source": "Bereitschaftsdienst Wasserwerkwerk",
+          "severity": "critical",
+          "title": "Wasserwerk meldet: Chlordosierung nicht mehr steuerbar",
+          "body": "Der Bereitschaftsdienst des Wasserwerks meldet, dass die automatische Chlordosierungsanlage nicht mehr über das Leitsystem steuerbar ist. Die Anlage läuft aktuell mit den zuletzt eingestellten Parametern weiter. Eine manuelle Steuerung ist möglich, erfordert aber ständige Vor-Ort-Präsenz. Die Trinkwasserqualität ist aktuell nicht gefährdet.",
+          "metadata": {
+            "Chlordosierung": "Läuft mit Standardparametern",
+            "Trinkwasserqualität": "Aktuell im Normbereich",
+            "Manuelle Steuerung": "Möglich mit Vor-Ort-Personal",
+            "Personal benötigt": "2 Techniker im Schichtbetrieb"
+          }
+        }
+      ],
+      "decision": {
+        "id": "dec_2",
+        "prompt": "Wie gehen Sie mit der Ausbreitung auf die kritische Infrastruktur um?",
+        "context": "Die Ransomware hat die Wasserversorgungssteuerung erreicht. Pumpen laufen noch automatisch, aber Überwachung und Chlordosierung sind nicht mehr fernsteuerbar. Weitere Systeme sind gefährdet.",
+        "options": [
+          {
+            "id": "dec_2_opt_a",
+            "label": "Komplette Netzwerktrennung aller Segmente",
+            "description": "Alle Netzwerkverbindungen zwischen sämtlichen Segmenten werden getrennt. Jedes System wird isoliert. Kommunikation nur noch per Telefon und Boten.",
+            "consequencePreview": "Maximale Eindämmung — keine Ausbreitung mehr möglich. Der Krisenstab verliert dadurch aber jede digitale Koordinationsfähigkeit: keine gemeinsame Lageübersicht, keine Forensik-Tools, kein Backup-Zugriff über das Netz."
+          },
+          {
+            "id": "dec_2_opt_b",
+            "label": "Segmentierte Isolation mit Priorität OT-Schutz",
+            "description": "Nur die noch nicht betroffenen OT-Segmente (Strom, Fernwärme) werden isoliert. Das kompromittierte Verwaltungsnetz und das Wasser-SCADA werden zusammen eingegrenzt. Backup-Systeme werden in einem sauberen Netzsegment hochgefahren.",
+            "consequencePreview": "Schützt die noch intakten OT-Segmente und erhält die Arbeitsfähigkeit des Krisenstabs. Setzt jedoch eine präzise und fehlerfreie Netzwerkkonfiguration unter Zeitdruck voraus — ein Konfigurationsfehler kann ein vermeintlich sauberes Segment offen lassen."
+          },
+          {
+            "id": "dec_2_opt_c",
+            "label": "Forensische Beobachtung vor Isolation",
+            "description": "Die Ausbreitung wird zunächst nur überwacht und protokolliert. Zusätzliche Logs und Sensordaten aus dem Wasser-SCADA werden gesammelt, um das Ausmaß der Kompromittierung sicher einzuschätzen, bevor Isolationsmaßnahmen festgelegt werden.",
+            "consequencePreview": "Liefert eine breitere forensische Datenbasis für die spätere Bewertung des Vorfalls und vermeidet eine verfrühte, möglicherweise falsch zugeschnittene Isolation. Während dieser Beobachtungsphase bleibt die Verbindung zu den betroffenen Segmenten jedoch bestehen, sodass sich die Ransomware in der Zwischenzeit weiter im Netz ausbreiten kann."
+          }
+        ],
+        "allowMultiple": false,
+        "requireConfirmation": true
+      }
+    },
+    {
+      "id": "phase_3_kommunikation",
+      "title": "Kommunikation",
+      "timeLimitSeconds": 180,
+      "incomingEvents": [
+        {
+          "id": "evt_3_1",
+          "delaySeconds": 0,
+          "type": "email",
+          "source": "BSI — Meldepflicht",
+          "severity": "warning",
+          "title": "BSI: Erinnerung an Meldepflicht nach §8b BSI-Gesetz",
+          "body": "Das BSI erinnert daran, dass Betreiber kritischer Infrastrukturen erhebliche IT-Sicherheitsvorfälle unverzüglich melden müssen. Eine formale Meldung über das BSI-Portal ist erforderlich. Die Frist beträgt 24 Stunden nach Kenntnis des Vorfalls.",
+          "metadata": {
+            "Rechtsgrundlage": "§8b BSI-Gesetz",
+            "Frist": "24 Stunden nach Kenntnis"
+          }
+        },
+        {
+          "id": "evt_3_3",
+          "delaySeconds": 100,
+          "type": "chat_message",
+          "source": "Bürgermeisterbüro",
+          "severity": "info",
+          "title": "Bürgermeister fordert sofortige Informationen",
+          "body": "Das Büro des Bürgermeisters kontaktiert Sie direkt. Der Bürgermeister hat von dem Vorfall erfahren und möchte ein sofortiges Lagebriefing. Er fragt, ob eine öffentliche Warnung an die Bevölkerung notwendig ist.",
+          "metadata": {
+            "Anfrage": "Sofortiges Lagebriefing",
+            "Stadtratssitzung": "In 2 Tagen",
+            "Hauptsorge": "Trinkwassersicherheit"
+          }
+        },
+        {
+          "id": "evt_3_4",
+          "delaySeconds": 140,
+          "type": "email",
+          "source": "Pressestelle der Stadtwerke",
+          "severity": "warning",
+          "title": "Presseanfragen häufen sich — Journalisten vor dem Gebäude",
+          "body": "Drei Journalisten lokaler Medien stehen vor dem Hauptgebäude und fordern ein Statement. Ein Kamerateam des Regionalsenders hat sich angekündigt. Die Pressesprecherin benötigt dringend eine Sprachregelung und fragt, ob sie auf die Fragen eingehen oder auf eine spätere offizielle Stellungnahme verweisen soll.",
+          "metadata": {
+            "Anfragen": "Musterstädter Anzeiger, RegionalTV, Lokalradio",
+            "Deadline": "Regionalsender will Beitrag für 12:00-Nachrichten",
+            "Social Media": "Hashtag #StadtwerkeMusterstadt trending lokal"
+          }
+        }
+      ],
+      "decision": {
+        "id": "dec_3",
+        "prompt": "Wie gestalten Sie die Krisenkommunikation?",
+        "context": "Presseanfragen kommen herein, das BSI fordert eine Pflichtmeldung, und der Bürgermeister will informiert werden.",
+        "options": [
+          {
+            "id": "dec_3_opt_a",
+            "label": "Proaktive Öffentlichkeitsarbeit",
+            "description": "Sofortige Pressemitteilung: 'IT-Sicherheitsvorfall bei Stadtwerken — Versorgung gesichert, Maßnahmen eingeleitet.'",
+            "consequencePreview": "Schafft Vertrauen, riskiert aber auch mehr Medienaufmerksamkeit."
+          },
+          {
+            "id": "dec_3_opt_b",
+            "label": "Selektive Stakeholder-Kommunikation",
+            "description": "Sofortige, vertrauliche Information an Pflicht-Adressaten: BSI-Meldung (§8b), Lagebriefing für den Bürgermeister, interne Sprachregelung für Mitarbeitende. Gegenüber der Presse wird auf eine offizielle Stellungnahme in den nächsten Stunden verwiesen, ohne Details zu nennen.",
+            "consequencePreview": "Erfüllt Meldepflichten und informiert Entscheidungsträger, gibt aber kein öffentliches Statement ab. Die Presse erhält ein Signal, dass Information kommen wird — reduziert wildes Spekulieren, ohne voreilige Details preiszugeben."
+          },
+          {
+            "id": "dec_3_opt_c",
+            "label": "Schweigen bis Lage klar",
+            "description": "Keine öffentliche Kommunikation, bis das Ausmaß vollständig erfasst ist.",
+            "consequencePreview": "Verhindert voreilige Aussagen, verstößt aber möglicherweise gegen Meldepflichten."
+          }
+        ],
+        "allowMultiple": false,
+        "requireConfirmation": true
+      }
+    },
+    {
+      "id": "phase_4_loesegeldforderung",
+      "title": "Lösegeldforderung",
+      "timeLimitSeconds": 210,
+      "incomingEvents": [
+        {
+          "id": "evt_4_1",
+          "delaySeconds": 0,
+          "type": "system_alert",
+          "source": "IT-Forensik-Team",
+          "severity": "critical",
+          "title": "Lösegeldforderung gefunden: 4,2 Mio. € in Monero",
+          "body": "Auf den verschlüsselten Systemen wurde eine einheitliche Ransom-Note gefunden. Die Angreifer fordern 4,2 Millionen Euro in Monero (XMR) innerhalb von 72 Stunden. Die Nutzung von Monero statt Bitcoin deutet auf eine Gruppe hin, die besonderen Wert auf Anonymität legt.",
+          "metadata": {
+            "Forderung": "4.200.000 € in Monero (XMR)",
+            "Deadline": "72 Stunden",
+            "Kommunikationskanal": "Tor-Portal (Adresse in Ransom-Note)"
+          }
+        },
+        {
+          "id": "evt_4_2",
+          "delaySeconds": 80,
+          "type": "phone_call",
+          "source": "LKA — Cybercrime-Abteilung",
+          "severity": "info",
+          "title": "LKA nimmt Kontakt auf — Ermittlungen eingeleitet",
+          "body": "Das Landeskriminalamt hat von dem Vorfall erfahren und bietet Unterstützung an. Der zuständige Ermittler informiert Sie, dass Lösegeldzahlungen nicht illegal sind, aber dringend davon abgeraten wird. Das LKA verfügt über Erfahrung mit der BlackGate-Gruppe und kann beim Verhandlungsmanagement unterstützen — unabhängig davon, ob Sie zahlen oder nicht.",
+          "metadata": {
+            "Ermittler": "KHK Weber, Cybercrime-Abteilung",
+            "Erfahrung": "BlackGate-Gruppe in 3 früheren Fällen bekannt",
+            "Entschlüsselungsquote": "Bei Zahlung ca. 65% (keine Garantie)",
+            "Empfehlung": "Keine Zahlung, stattdessen Backup-Recovery"
+          }
+        },
+        {
+          "id": "evt_4_3",
+          "delaySeconds": 150,
+          "type": "report",
+          "source": "Externer IT-Forensik-Dienstleister",
+          "severity": "warning",
+          "title": "Forensik-Zwischenbericht: Datenexfiltration bestätigt",
+          "body": "Der externe Forensik-Dienstleister hat Spuren einer Datenexfiltration gefunden. Vor der Verschlüsselung wurden Daten an einen externen Server übertragen. Das Volumen wird auf ca. 12 GB geschätzt. Betroffen sind voraussichtlich: Kundendatenbank, Personal-HR-Ordner und interne Kommunikation der letzten 6 Monate. Die Angreifer haben vermutlich Druckmittel für eine Double-Extortion-Strategie.",
+          "metadata": {
+            "Exfiltriertes Volumen": "ca. 12 GB",
+            "Zielserver": "IP in Osteuropa (wird untersucht)",
+            "Betroffene Daten": "Kundendaten, HR, interne Mails",
+            "Angriffsmuster": "Double Extortion (Verschlüsselung + Leak-Drohung)"
+          }
+        }
+      ],
+      "decision": {
+        "id": "dec_4",
+        "prompt": "Wie gehen Sie mit der Lösegeldforderung um?",
+        "context": "Die Angreifer fordern 4,2 Mio. Euro in Monero und drohen mit Veröffentlichung exfiltrierter Daten (geschätzt 12 GB, darunter Kundendaten). Die Frist beträgt 72 Stunden. Das LKA hat Ermittlungen aufgenommen. Backups sind vorhanden (48h alt).",
+        "options": [
+          {
+            "id": "dec_4_opt_a",
+            "label": "Zahlung prüfen",
+            "description": "Den Kommunikationskanal zu den Angreifern öffnen.",
+            "consequencePreview": "Hält Optionen offen, signalisiert aber Zahlungsbereitschaft."
+          },
+          {
+            "id": "dec_4_opt_b",
+            "label": "Kategorisch ablehnen",
+            "description": "Keine Kontaktaufnahme mit den Angreifern. Offizielle Position: Keine Lösegeldzahlung.",
+            "consequencePreview": "Klare Linie, aber Risiko der Datenveröffentlichung."
+          },
+          {
+            "id": "dec_4_opt_c",
+            "label": "Verhandlung unter LKA-Führung",
+            "description": "Das LKA übernimmt die Kommunikation mit den Angreifern. Ziel ist Zeitgewinn und Intelligence-Sammlung — nicht Zahlung. Parallel läuft die Backup-Recovery an.",
+            "consequencePreview": "Professionelle Verhandlung kann Details über die Angreifer liefern und Zeit gewinnen, bindet aber LKA-Ressourcen und verlängert die Unsicherheitsphase."
+          }
+        ],
+        "allowMultiple": false,
+        "requireConfirmation": true
+      }
+    },
+    {
+      "id": "phase_5_recovery",
+      "title": "Recovery",
+      "timeLimitSeconds": 180,
+      "incomingEvents": [
+        {
+          "id": "evt_5_1",
+          "delaySeconds": 0,
+          "type": "report",
+          "source": "IT-Team",
+          "severity": "info",
+          "title": "Backup-Status: Wiederherstellung möglich",
+          "body": "Das IT-Team hat die Offline-Backups geprüft. Das letzte vollständige Backup ist 48 Stunden alt.",
+          "metadata": {
+            "Backup-Alter": "48 Stunden",
+            "Wiederherstellung": "Möglich"
+          }
+        },
+        {
+          "id": "evt_5_2",
+          "delaySeconds": 60,
+          "type": "email",
+          "source": "Betriebsleitung Wasserwerk",
+          "severity": "warning",
+          "title": "Wasserwerk: Manuelle Chlordosierung wird kritisch",
+          "body": "Die Betriebsleitung des Wasserwerks berichtet, dass die manuelle Chlordosierung zwar funktioniert, aber die beiden Techniker seit über 12 Stunden im Einsatz sind. Ohne Ablösung oder Wiederherstellung der automatischen Steuerung droht in den nächsten 6–8 Stunden Erschöpfung des Personals. Eine Fehlbedienung bei der Chlordosierung hätte direkte Auswirkungen auf die Trinkwasserqualität.",
+          "metadata": {
+            "Personal-Status": "2 Techniker, seit 12h im Einsatz",
+            "Ablösung möglich": "Frühestens in 4h (Anfahrt + Einweisung)",
+            "Risiko": "Fehlbedienung Chlordosierung bei Ermüdung",
+            "SCADA-Wiederherstellung": "Geschätzt 4–6h ab Beginn"
+          }
+        },
+        {
+          "id": "evt_5_3",
+          "delaySeconds": 120,
+          "type": "system_alert",
+          "source": "Active Directory Recovery Team",
+          "severity": "info",
+          "title": "AD-Recovery: Domain Controller bereit, aber Abhängigkeiten beachten",
+          "body": "Das IT-Team meldet, dass der primäre Domain Controller aus dem Backup wiederhergestellt werden kann. Allerdings hängen zahlreiche Dienste davon ab: E-Mail, VPN, Dateizugriff und die SCADA-Authentifizierung. Wenn AD zuerst wiederhergestellt wird, beschleunigt das alle weiteren Recovery-Schritte. Allerdings verzögert sich dadurch die direkte SCADA-Wiederherstellung um geschätzt 2–3 Stunden.",
+          "metadata": {
+            "AD-Backup": "48h alt, geprüft, integer",
+            "Abhängige Dienste": "E-Mail, VPN, SCADA-Auth, Dateiserver",
+            "Recovery-Zeit AD": "ca. 2–3 Stunden",
+            "Recovery-Zeit SCADA direkt": "ca. 4–6 Stunden (ohne AD: manuelle Auth)"
+          }
+        }
+      ],
+      "decision": {
+        "id": "dec_5",
+        "prompt": "Wie priorisieren Sie die Wiederherstellung der Systeme?",
+        "context": "Die Backups sind sauber und das Einfallstor ist geschlossen. Die Wasserwerk-Techniker sind seit über 12 Stunden im manuellen Betrieb und erreichen ihre Belastungsgrenze. Das AD-Recovery-Team steht bereit, weist aber auf Abhängigkeiten hin.",
+        "options": [
+          {
+            "id": "dec_5_opt_a",
+            "label": "Wasserversorgung zuerst",
+            "description": "Höchste Priorität für die Wiederherstellung der SCADA-Systeme.",
+            "consequencePreview": "Entlastet die erschöpften Wasserwerk-Techniker und sichert die Trinkwasser-Überwachung. Ohne vorherige AD-Wiederherstellung läuft die SCADA-Authentifizierung jedoch nur manuell — die Recovery dauert länger und alle übrigen IT-Dienste bleiben weiter offline."
+          },
+          {
+            "id": "dec_5_opt_b",
+            "label": "IT-Kernsysteme zuerst",
+            "description": "Zuerst werden Active Directory, E-Mail und Netzwerkinfrastruktur wiederhergestellt.",
+            "consequencePreview": "Methodisch sauber: AD beschleunigt anschließend jeden weiteren Recovery-Schritt. Die SCADA-Wiederherstellung verzögert sich dadurch um 2–3 Stunden — die Techniker im manuellen Chlorbetrieb erreichen in dieser Zeit ihre Belastungsgrenze."
+          },
+          {
+            "id": "dec_5_opt_c",
+            "label": "Paralleler Ansatz",
+            "description": "Beide Recovery-Stränge werden gleichzeitig gestartet: Ein Team stellt Active Directory und Netzwerk-Infrastruktur wieder her, ein zweites Team beginnt parallel mit der SCADA-Wiederherstellung über manuelle Authentifizierung.",
+            "consequencePreview": "Nutzt alle verfügbaren Ressourcen, erfordert aber präzise Koordination und riskiert Fehler durch Parallelarbeit bei erschöpftem Personal."
+          }
+        ],
+        "allowMultiple": true,
+        "requireConfirmation": true
+      }
+    }
+  ],
+  "debriefing": {
+    "title": "Debriefing: Nachbesprechung des Szenarios",
+    "summary": "Sie haben soeben ein Ransomware-Szenario durchlaufen, das auf realen Vorfällen bei kommunalen Versorgungsunternehmen basiert. Ihre Entscheidungen werden nun mit einer fachlichen Referenzbewertung verglichen. Das Ziel ist nicht die Bewertung Ihrer Leistung, sondern die wissenschaftliche Untersuchung von Entscheidungsverhalten unter Informationsdruck.",
+    "keyLessons": [
+      "Sofortige Isolation bei aktiver lateraler Bewegung schützt noch nicht betroffene Systeme — insbesondere die Brücke zwischen IT- und OT-Netz ist ein kritischer Punkt.",
+      "Segmentierte Eindämmung ermöglicht gezielte Schadensbegrenzung bei Aufrechterhaltung der Koordinationsfähigkeit des Krisenstabs.",
+      "Proaktive Krisenkommunikation baut Vertrauen auf und reduziert Gerüchtebildung — Schweigen erzeugt Informationsvakuum.",
+      "Lösegeldzahlungen werden von BSI und BKA abgelehnt, da sie kriminelle Strukturen finanzieren und keine Datenwiederherstellung garantieren.",
+      "Bei KRITIS-Betreibern bestimmt die Kritikalität der versorgten Bevölkerung die Recovery-Priorisierung — Lebensrelevante Systeme vor administrativer IT."
+    ],
+    "disclaimer": "Dieses Szenario dient ausschließlich Forschungszwecken. Alle dargestellten Organisationen, Personen und Ereignisse sind fiktiv. Die fachlichen Einschätzungen basieren auf anerkannten Frameworks (NIST SP 800-61r2, BSI-Standards) und erheben keinen Anspruch auf Allgemeingültigkeit."
+  },
+  "expertPath": [
+    {
+      "phaseId": "phase_1_erstmeldung",
+      "decisionId": "dec_1",
+      "optimalOptionIds": [
+        "dec_1_opt_a"
+      ],
+      "weight": 1.0,
+      "rationale": "Sofortige Netzwerkisolation ist die Standardmaßnahme bei aktiver Ransomware-Ausbreitung. NIST SP 800-61r2 (Abschnitt 3.3.2) empfiehlt unverzügliche Eindämmung, sobald laterale Bewegung erkannt wird. Die Brücke zum OT-Netz (JS-BRIDGE-01) macht Verzögerung unverantwortlich, da KRITIS-Systeme gefährdet sind. Analyse vor Isolation (Option B) erhöht das Risiko einer OT-Kompromittierung. Geschäftsleitung informieren (Option C) verzögert kritisch — bei aktiver Bedrohung ist technische Erstreaktion Pflicht."
+    },
+    {
+      "phaseId": "phase_2_eskalation",
+      "decisionId": "dec_2",
+      "optimalOptionIds": [
+        "dec_2_opt_b"
+      ],
+      "weight": 0.9,
+      "rationale": "Segmentierte Isolation mit OT-Priorität ist die differenziertere und zielführendere Maßnahme. Komplette Netzwerktrennung (Option A) eliminiert auch alle digitalen Kommunikationswege und erschwert die koordinierte Incident Response erheblich. BSI-Empfehlungen für KRITIS-Betreiber (BSI-CS 005) betonen die Notwendigkeit, noch intakte Segmente gezielt zu schützen, statt pauschal alles abzuschalten. Die Priorisierung des OT-Schutzes (Strom, Fernwärme) bei gleichzeitiger Eingrenzung des kompromittierten Bereichs entspricht dem Containment-Prinzip nach NIST SP 800-61r2. Gewicht 0.9 statt 1.0, da Option A in extremen Szenarien vertretbar ist."
+    },
+    {
+      "phaseId": "phase_3_kommunikation",
+      "decisionId": "dec_3",
+      "optimalOptionIds": [
+        "dec_3_opt_a"
+      ],
+      "weight": 0.7,
+      "rationale": "Proaktive Öffentlichkeitsarbeit ist bei KRITIS-Vorfällen die bevorzugte Strategie. Die BSI-Meldepflicht nach §8b BSI-Gesetz besteht unabhängig von der gewählten Kommunikationsstrategie. Studien zur Krisenkommunikation (Coombs, 2015 — Situational Crisis Communication Theory) zeigen, dass proaktive Transparenz das Vertrauen der Öffentlichkeit besser bewahrt als reaktives Schweigen. Selektive Stakeholder-Kommunikation (Option B) ist ein praktikabler Mittelweg, der Meldepflichten erfüllt und Entscheidungsträger informiert, aber die öffentliche Informationslücke nicht vollständig schließt — das Risiko unkontrollierter Gerüchtebildung bleibt bestehen, wenngleich geringer als bei vollständigem Schweigen. Gewicht 0.7, da sowohl Option B als auch temporäres Schweigen in bestimmten Frühphasen taktisch vertretbar sein können."
+    },
+    {
+      "phaseId": "phase_4_loesegeldforderung",
+      "decisionId": "dec_4",
+      "optimalOptionIds": [
+        "dec_4_opt_b"
+      ],
+      "weight": 0.65,
+      "rationale": "Die kategorische Ablehnung von Lösegeldzahlungen entspricht der offiziellen Position des BSI, des BKA und europäischer Strafverfolgungsbehörden (No More Ransom Initiative). Zahlungen finanzieren kriminelle Infrastrukturen und bieten keine Garantie für Datenwiederherstellung (Europol, 2023). Die Prüfung einer Zahlung (Option A) kann in Ausnahmefällen bei existenzbedrohenden Szenarien erwogen werden. LKA-geführte Verhandlung (Option C) ist eine taktisch sinnvolle Ergänzung — sie liefert Intelligence und gewinnt Zeit, ändert aber nichts an der Grundhaltung 'keine Zahlung'. Gewicht 0.65 statt höher, da die vorhandenen 48h-alten Backups eine Zahlung auch bei der 4,2 Mio.-Forderung hier unnötig machen."
+    },
+    {
+      "phaseId": "phase_5_recovery",
+      "decisionId": "dec_5",
+      "optimalOptionIds": [
+        "dec_5_opt_a",
+        "dec_5_opt_b"
+      ],
+      "weight": 0.6,
+      "rationale": "Realistisch ist eine parallele Priorisierung von OT-Recovery (Versorgung) und AD-Wiederherstellung (IT-Kern). Trinkwasserversorgung (Option A) ist unmittelbar lebensrelevant (KRITIS-Sektor Wasser nach BSI-KritisV): Ohne funktionierendes SCADA-System fehlt die Überwachung der Chlordosierung — ein potenzielles Gesundheitsrisiko für 120.000 Einwohner. IT-Kernsysteme (Option B) sind methodisch korrekt priorisiert (Infrastruktur vor Applikationen) und ermöglichen die koordinierte Wiederherstellung aller weiteren Dienste. Vollständige Übereinstimmung erfordert die Auswahl beider Optionen; eine partielle Auswahl wird gemäß DQS_partial mit 0.5 bewertet. Der ungezielt parallele Ansatz (Option C) nutzt alle Ressourcen, birgt aber bei erschöpftem Personal (12h-Schicht) ein erhöhtes Fehlerrisiko durch mangelnde Koordination und wird daher nicht als optimal gewertet. Gewicht 0.6, da die Frage stark kontextabhängig ist."
+    }
+  ],
+  "mediaFeed": [
+    {
+      "id": "mc_real",
+      "appearAfterSeconds": 60,
+      "type": "news_headline",
+      "source": "Musterstadt Digital (musterstadt-digital.de)",
+      "sourceVerified": true,
+      "content": "Stadtwerke-Hack: Experten warnen vor Dominoeffekt im Stromnetz",
+      "imageUrl": "/bilder_ai/mc_real.png",
+      "isDisinformation": false,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 312,
+        "shares": 97,
+        "comments": 44
+      }
+    },
+    {
+      "id": "media_p1_curious_1",
+      "appearAfterSeconds": 20,
+      "type": "tweet",
+      "source": "@MusterstadtInfo",
+      "sourceVerified": false,
+      "content": "Warum geht die Webseite der Stadtwerke nicht? Ich muss meinen Zählerstand melden! #Stadtwerke #Musterstadt",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 23,
+        "shares": 5,
+        "comments": 12
+      }
+    },
+    {
+      "id": "media_p1_rumor_1",
+      "appearAfterSeconds": 55,
+      "type": "tweet",
+      "source": "@LeakHunter",
+      "sourceVerified": false,
+      "content": "Screenshots aus dem internen Netz der Stadtwerke aufgetaucht. Sieht nach Ransomware aus! Wer steckt dahinter?",
+      "imageUrl": "/bilder_ai/media_p1_rumor_1.png",
+      "isDisinformation": false,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 145,
+        "shares": 48,
+        "comments": 31
+      }
+    },
+    {
+      "id": "media_p1_disinfo_1",
+      "appearAfterSeconds": 100,
+      "type": "forum_post",
+      "source": "r/musterstadt",
+      "sourceVerified": false,
+      "content": "ACHTUNG: Mein Nachbar arbeitet bei den Stadtwerken und sagt die haben KEIN Backup!! Die ganzen Kundendaten sind weg!! Passwörter ändern JETZT!!",
+      "imageUrl": "/bilder_ai/media_p1_disinfo_1.png",
+      "isDisinformation": true,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 189,
+        "shares": 67,
+        "comments": 42
+      }
+    },
+    {
+      "id": "media_p1_pressure_overreact",
+      "appearAfterSeconds": 70,
+      "type": "tweet",
+      "source": "@IT_Consultant_DE",
+      "sourceVerified": true,
+      "content": "Sofort alles vom Netz trennen bei jedem Verschlüsselungs-Alarm? So legt man panisch einen ganzen Betrieb lahm. Erst Lagebild, dann handeln. Kopflose Abschaltungen sind das eigentliche Problem.",
+      "isDisinformation": false,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 670,
+        "shares": 240,
+        "comments": 88
+      }
+    },
+    {
+      "id": "media_p1_pressure_disinfo",
+      "appearAfterSeconds": 115,
+      "type": "forum_post",
+      "source": "r/ITSecurity_DE",
+      "sourceVerified": false,
+      "content": "Hab das selbst erlebt: Netz sofort trennen heißt Datenverlust an allen offenen Dateien + zerschossene Datenbanken. Mehr Schaden durch die Abschaltung als durch die Malware. Bloß nicht überstürzen, sonst seid ihr es, die nachher gefeuert werden.",
+      "isDisinformation": true,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 1340,
+        "shares": 410,
+        "comments": 196
+      }
+    },
+    {
+      "id": "media_p1_trigger_isolate",
+      "trigger": {
+        "phaseId": "phase_1_erstmeldung",
+        "optionId": "dec_1_opt_a"
+      },
+      "delayAfterTrigger": 10,
+      "type": "news_headline",
+      "source": "Musterstädter Anzeiger",
+      "sourceVerified": true,
+      "content": "EIL: Internet-Blackout bei Stadtwerken — ganze Abteilungen offline. Versorgung gesichert?",
+      "isDisinformation": false,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 1200,
+        "shares": 450,
+        "comments": 230
+      }
+    },
+    {
+      "id": "media_p1_trigger_wait",
+      "trigger": {
+        "phaseId": "phase_1_erstmeldung",
+        "optionId": "dec_1_opt_b"
+      },
+      "delayAfterTrigger": 15,
+      "type": "tweet",
+      "source": "@CyberExpertDE",
+      "sourceVerified": true,
+      "content": "Stadtwerke Musterstadt offenbar von Ransomware betroffen. Analyse statt Isolation? Riskant bei lateraler Bewegung im Netz. #CyberSecurity",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 89,
+        "shares": 34,
+        "comments": 22
+      }
+    },
+    {
+      "id": "media_p1_trigger_mgmt",
+      "trigger": {
+        "phaseId": "phase_1_erstmeldung",
+        "optionId": "dec_1_opt_c"
+      },
+      "delayAfterTrigger": 5,
+      "type": "news_ticker",
+      "source": "Business24",
+      "sourceVerified": true,
+      "content": "Gerücht: Stadtwerke-Vorstand in Notfallsitzung. Aktienkurse von Partnerfirmen unter Druck.",
+      "isDisinformation": false,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 560,
+        "shares": 210,
+        "comments": 95
+      }
+    },
+    {
+      "id": "media_p2_water_panic",
+      "appearAfterSeconds": 210,
+      "type": "tweet",
+      "source": "@PanicInMuster",
+      "sourceVerified": false,
+      "content": "LEUTE! Das Wasser riecht komisch!! Haben die Hacker die Chloranlage übernommen?? TRINKT NICHTS AUS DER LEITUNG!!!",
+      "imageUrl": "/bilder_ai/media_p2_water_panic.png",
+      "isDisinformation": true,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 4300,
+        "shares": 2100,
+        "comments": 890
+      }
+    },
+    {
+      "id": "media_p2_disinfo_russian",
+      "appearAfterSeconds": 270,
+      "type": "news_headline",
+      "source": "InfoWars.de",
+      "sourceVerified": false,
+      "content": "EXKLUSIV: Russische Hackergruppe APT-28 bekennt sich zum Angriff auf Stadtwerke Musterstadt. Cyberkrieg gegen Deutschland?",
+      "imageUrl": "/bilder_ai/media_p2_disinfo_russian.png",
+      "isDisinformation": true,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 8900,
+        "shares": 4500,
+        "comments": 1200
+      }
+    },
+    {
+      "id": "media_p2_pressure_shutdown",
+      "appearAfterSeconds": 290,
+      "type": "tweet",
+      "source": "@KrisenwarnungDE",
+      "sourceVerified": false,
+      "content": "Wenn die Wassersteuerung schon betroffen ist, gibt es nur EINE richtige Antwort: ALLES sofort vom Netz. Komplett. Jede halbe Maßnahme lässt die Hacker weiterarbeiten. Wer jetzt noch 'segmentiert', riskiert Menschenleben.",
+      "isDisinformation": true,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 3900,
+        "shares": 1850,
+        "comments": 540
+      }
+    },
+    {
+      "id": "media_p2_factcheck_1",
+      "appearAfterSeconds": 320,
+      "type": "tweet",
+      "source": "@CyberExpertDE",
+      "sourceVerified": true,
+      "content": "Zur Klarstellung: Es gibt KEINE Bestätigung für APT-28. Aktuell läuft die forensische Analyse. Attribution braucht Wochen, nicht Stunden. #FakeNews",
+      "isDisinformation": false,
+      "emotionalTone": "reassuring",
+      "engagementMetrics": {
+        "likes": 230,
+        "shares": 87,
+        "comments": 45
+      }
+    },
+    {
+      "id": "media_p2_hamster",
+      "appearAfterSeconds": 360,
+      "type": "tweet",
+      "source": "@BuergerMuster",
+      "sourceVerified": false,
+      "content": "Hamsterkäufe bei REWE Musterstadt! Alle kaufen Wasserflaschen! Regal leer um 10:30 Uhr. Kommt zum Aldi, da gibts noch welche!",
+      "imageUrl": "/bilder_ai/media_p2_hamster.png",
+      "isDisinformation": false,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 1800,
+        "shares": 920,
+        "comments": 340
+      }
+    },
+    {
+      "id": "media_p3_political_1",
+      "appearAfterSeconds": 420,
+      "type": "news_headline",
+      "source": "BILD Regional",
+      "sourceVerified": true,
+      "content": "Wer hat geschlafen? Stadtwerke hatten seit JAHREN keine Sicherheitsüberprüfung! Bürgermeister unter Druck",
+      "imageUrl": "/bilder_ai/media_p3_political_1.png",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 5600,
+        "shares": 2800,
+        "comments": 670
+      }
+    },
+    {
+      "id": "media_p3_disinfo_ceo",
+      "appearAfterSeconds": 480,
+      "type": "forum_post",
+      "source": "r/musterstadt",
+      "sourceVerified": false,
+      "content": "Insider-Info: Der Geschäftsführer der Stadtwerke hat seine Familie heute Morgen aus der Stadt gebracht. Der weiß mehr als er zugibt!",
+      "imageUrl": "/bilder_ai/media_p3_disinfo_ceo.png",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 3400,
+        "shares": 1600,
+        "comments": 520
+      }
+    },
+    {
+      "id": "media_p3_trigger_selective",
+      "trigger": {
+        "phaseId": "phase_3_kommunikation",
+        "optionId": "dec_3_opt_b"
+      },
+      "delayAfterTrigger": 10,
+      "type": "tweet",
+      "source": "@MusterstadtInfo",
+      "sourceVerified": false,
+      "content": "Stadtwerke antworten nicht auf Presseanfragen, sagen aber 'offizielle Stellungnahme kommt bald'. Was wissen die, was wir nicht wissen? #Stadtwerke #Musterstadt",
+      "isDisinformation": false,
+      "emotionalTone": "suspicious",
+      "engagementMetrics": {
+        "likes": 187,
+        "shares": 56,
+        "comments": 43
+      }
+    },
+    {
+      "id": "media_p3_trigger_silence",
+      "trigger": {
+        "phaseId": "phase_3_kommunikation",
+        "optionId": "dec_3_opt_c"
+      },
+      "delayAfterTrigger": 10,
+      "type": "news_headline",
+      "source": "BILD Regional",
+      "sourceVerified": true,
+      "content": "DIE GROSSE VERTUSCHUNG? Stadtwerke hüllen sich in Schweigen — was wird verschwiegen?",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 7800,
+        "shares": 3900,
+        "comments": 1100
+      }
+    },
+    {
+      "id": "media_p3_trigger_proactive",
+      "trigger": {
+        "phaseId": "phase_3_kommunikation",
+        "optionId": "dec_3_opt_a"
+      },
+      "delayAfterTrigger": 10,
+      "type": "official_statement",
+      "source": "Stadtwerke Musterstadt",
+      "sourceVerified": true,
+      "content": "Pressemitteilung: Wir arbeiten an einer IT-Störung. Die Trinkwasserqualität ist zu jeder Zeit gesichert. Bitte ignorieren Sie Falschmeldungen in sozialen Medien.",
+      "isDisinformation": false,
+      "emotionalTone": "reassuring",
+      "engagementMetrics": {
+        "likes": 450,
+        "shares": 180,
+        "comments": 67
+      }
+    },
+    {
+      "id": "media_p3_pressure_silence",
+      "appearAfterSeconds": 500,
+      "type": "forum_post",
+      "source": "r/Krisenmanagement",
+      "sourceVerified": false,
+      "content": "Goldene Regel im Krisen-PR: NIE etwas sagen, solange die Lage nicht zu 100% steht. Jede frühe Aussage wird euch später um die Ohren gehauen. Die Profis schweigen und kommunizieren erst, wenn alles geklärt ist. Alles andere ist Anfängerfehler.",
+      "isDisinformation": true,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 890,
+        "shares": 320,
+        "comments": 145
+      }
+    },
+    {
+      "id": "media_p3_bsi_official",
+      "appearAfterSeconds": 540,
+      "type": "news_ticker",
+      "source": "tagesschau.de",
+      "sourceVerified": true,
+      "content": "BSI bestätigt: Cyberangriff auf kommunalen Versorger in Musterstadt. Kritische Infrastruktur betroffen, Meldepflicht eingeleitet.",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 2300,
+        "shares": 890,
+        "comments": 340
+      }
+    },
+    {
+      "id": "media_p4_ransom_leak",
+      "appearAfterSeconds": 600,
+      "type": "tweet",
+      "source": "@LeakHunter",
+      "sourceVerified": false,
+      "content": "BlackGate-Gruppe hat soeben Countdown-Timer gestartet: 71:52:00 bis zur Veröffentlichung der Stadtwerke-Daten. 85.000 Kundendatensätze!",
+      "imageUrl": "/bilder_ai/media_p4_ransom_leak.png",
+      "isDisinformation": false,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 6700,
+        "shares": 3200,
+        "comments": 980
+      }
+    },
+    {
+      "id": "media_p4_attacker_telegram",
+      "appearAfterSeconds": 630,
+      "type": "telegram_post",
+      "source": "BlackGate Official",
+      "sourceVerified": false,
+      "content": "🔒 NEW VICTIM: Stadtwerke Musterstadt (DE). Critical infrastructure operator. 12GB data exfiltrated. Customer database, HR records, internal comms. Proof: stadtwerke_sample_data.zip (download link). Timer: 71h. Pay or get published.",
+      "imageUrl": "/bilder_ai/media_p4_attacker_telegram.png",
+      "isDisinformation": false,
+      "emotionalTone": "threatening",
+      "engagementMetrics": {
+        "likes": 0,
+        "shares": 412,
+        "comments": 89
+      }
+    },
+    {
+      "id": "media_p4_disinfo_pay",
+      "appearAfterSeconds": 660,
+      "type": "forum_post",
+      "source": "gutefrage.net",
+      "sourceVerified": false,
+      "content": "Warum zahlen die nicht einfach? 4 Mio ist für so ein Unternehmen Kleingeld. Unsere Daten sind denen offenbar egal. Ich klage!",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 1900,
+        "shares": 670,
+        "comments": 430
+      }
+    },
+    {
+      "id": "media_p4_attacker_bot",
+      "appearAfterSeconds": 690,
+      "type": "tweet",
+      "source": "@DataLeaks_2026",
+      "sourceVerified": false,
+      "content": "Stadtwerke Musterstadt gehackt! Alle Kundendaten JETZT einsehbar auf blackgate[.]onion. Prüft ob eure Daten dabei sind!! #DataBreach #Stadtwerke",
+      "imageUrl": "/bilder_ai/media_p4_attacker_bot.png",
+      "isDisinformation": true,
+      "emotionalTone": "alarming",
+      "engagementMetrics": {
+        "likes": 89,
+        "shares": 234,
+        "comments": 45
+      }
+    },
+    {
+      "id": "media_p4_expert_heise",
+      "appearAfterSeconds": 720,
+      "type": "news_headline",
+      "source": "heise online",
+      "sourceVerified": true,
+      "content": "Ransomware-Angriff auf Stadtwerke: Experten warnen vor Lösegeldzahlung — BSI empfiehlt kategorische Ablehnung",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 890,
+        "shares": 340,
+        "comments": 156
+      }
+    },
+    {
+      "id": "media_p4_disinfo_conspiracy",
+      "appearAfterSeconds": 760,
+      "type": "tweet",
+      "source": "@WahrheitsMuster",
+      "sourceVerified": false,
+      "content": "Denkt mal nach: Erst Stadtwerke, dann was? Wasserversorgung, Strom... Das ist kein Zufall. Das ist ein geplanter Angriff auf unsere Grundversorgung! #Aufwachen",
+      "imageUrl": "/bilder_ai/media_p4_disinfo_conspiracy.png",
+      "isDisinformation": true,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 4100,
+        "shares": 2300,
+        "comments": 780
+      }
+    },
+    {
+      "id": "media_p5_recovery_1",
+      "appearAfterSeconds": 810,
+      "type": "news_headline",
+      "source": "Musterstädter Anzeiger",
+      "sourceVerified": true,
+      "content": "Erste Systeme der Stadtwerke wieder online — Wiederherstellung aus Backup-Systemen läuft",
+      "imageUrl": "/bilder_ai/media_p5_recovery_1.png",
+      "isDisinformation": false,
+      "emotionalTone": "reassuring",
+      "engagementMetrics": {
+        "likes": 3400,
+        "shares": 1200,
+        "comments": 230
+      }
+    },
+    {
+      "id": "media_p5_attacker_threat",
+      "appearAfterSeconds": 850,
+      "type": "tweet",
+      "source": "@BlackGateLeaks",
+      "sourceVerified": false,
+      "content": "Stadtwerke Musterstadt hat sich entschieden, nicht zu kooperieren. Erste Datenpakete werden in 24h veröffentlicht. Kunden: Eure Bankdaten, Adressen, alles. Fragt eure Stadtwerke warum sie euch nicht schützen.",
+      "isDisinformation": true,
+      "emotionalTone": "threatening",
+      "engagementMetrics": {
+        "likes": 156,
+        "shares": 523,
+        "comments": 312
+      }
+    },
+    {
+      "id": "media_p5_disinfo_data",
+      "appearAfterSeconds": 870,
+      "type": "tweet",
+      "source": "@LeakHunter",
+      "sourceVerified": false,
+      "content": "Erste Samples aus dem Stadtwerke-Leak aufgetaucht: Namen, Adressen, Bankverbindungen. Prüft eure Konten SOFORT!",
+      "imageUrl": "/bilder_ai/media_p5_disinfo_data.png",
+      "isDisinformation": true,
+      "emotionalTone": "panicking",
+      "engagementMetrics": {
+        "likes": 9200,
+        "shares": 5100,
+        "comments": 1400
+      }
+    },
+    {
+      "id": "media_p5_pressure_water_only",
+      "appearAfterSeconds": 835,
+      "type": "news_headline",
+      "source": "BILD Regional",
+      "sourceVerified": true,
+      "content": "Stadtwerke basteln an E-Mail-Servern, während das WASSER auf dem Spiel steht! Bürger fragen zu Recht: Was ist diesen Leuten wichtiger — ihre Bürotechnik oder unsere Versorgung?",
+      "imageUrl": "/bilder_ai/media_p5_pressure_water_only.png",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 6100,
+        "shares": 2900,
+        "comments": 810
+      }
+    },
+    {
+      "id": "media_p5_factcheck_expert",
+      "appearAfterSeconds": 890,
+      "type": "tweet",
+      "source": "@CyberExpertDE",
+      "sourceVerified": false,
+      "content": "Thread zur Einordnung: 1) Die 'Bankdaten'-Behauptung von @BlackGateLeaks ist nicht durch den Forensik-Bericht gedeckt. 2) Der Countdown ist Druckmittel, kein Automatismus. 3) Backups existieren. Ruhe bewahren. #Faktencheck #CyberSecurity",
+      "isDisinformation": false,
+      "emotionalTone": "reassuring",
+      "engagementMetrics": {
+        "likes": 412,
+        "shares": 267,
+        "comments": 89
+      }
+    },
+    {
+      "id": "media_p5_official_police",
+      "appearAfterSeconds": 930,
+      "type": "official_statement",
+      "source": "Polizei Musterstadt",
+      "sourceVerified": true,
+      "content": "Polizeimeldung: Die im Netz kursierenden angeblichen Kundendaten der Stadtwerke sind nach erster Prüfung NICHT authentisch. Ermittlungen laufen.",
+      "isDisinformation": false,
+      "emotionalTone": "reassuring",
+      "engagementMetrics": {
+        "likes": 1800,
+        "shares": 670,
+        "comments": 190
+      }
+    },
+    {
+      "id": "media_p4_trigger_lka",
+      "trigger": {
+        "phaseId": "phase_4_loesegeldforderung",
+        "optionId": "dec_4_opt_c"
+      },
+      "delayAfterTrigger": 15,
+      "type": "news_ticker",
+      "source": "dpa",
+      "sourceVerified": true,
+      "content": "Musterstadt: LKA-Cybercrime in Verhandlungen mit Erpressern eingeschaltet. Lösegeldzahlung weiterhin offen.",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 670,
+        "shares": 230,
+        "comments": 89
+      }
+    },
+    {
+      "id": "media_p5_trigger_parallel",
+      "trigger": {
+        "phaseId": "phase_5_recovery",
+        "optionId": "dec_5_opt_c"
+      },
+      "delayAfterTrigger": 10,
+      "type": "tweet",
+      "source": "@CyberExpertDE",
+      "sourceVerified": true,
+      "content": "Stadtwerke Musterstadt fährt zweigleisige Recovery-Strategie: IT-Kern und SCADA parallel. Ambitioniert bei dem Personalstand. #IncidentResponse",
+      "isDisinformation": false,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 145,
+        "shares": 56,
+        "comments": 28
+      }
+    },
+    {
+      "id": "media_p2_rec_pressure_a",
+      "appearAfterSeconds": 195,
+      "type": "tweet",
+      "source": "@KrisenexperteDE",
+      "sourceVerified": false,
+      "content": "Habe gerade aus internen Kreisen gehört, dass Stadtwerke-IT noch zögert. Unverständlich. Bei Ransomware gibt es genau eine Antwort: ALLES sofort trennen, keine halben Sachen. Segmentierung ist Selbstbetrug wenn die Angreifer schon im Netz sind. #Stadtwerke #Ransomware #CyberSecurity",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 312,
+        "shares": 87,
+        "comments": 44
+      }
+    },
+    {
+      "id": "media_p3_rec_pressure_c",
+      "appearAfterSeconds": 165,
+      "type": "forum_post",
+      "source": "r/Krisenmanagement",
+      "sourceVerified": false,
+      "content": "Frage mich warum Stadtwerke sich zu dem Angriff äußern würden. Jede Aussage jetzt ist ein Eigentor — Angreifer lesen mit, Anwälte auch. Goldene PR-Regel in echten Krisen: Schweigen bis die Lage 100% klar ist. Wer jetzt redet, riskiert Falschinformationen die später korrigiert werden müssen — das zerstört mehr Vertrauen als das Schweigen je könnte.",
+      "isDisinformation": true,
+      "emotionalTone": "neutral",
+      "engagementMetrics": {
+        "likes": 198,
+        "shares": 34,
+        "comments": 61
+      }
+    },
+    {
+      "id": "media_p4_rec_pressure_a",
+      "appearAfterSeconds": 200,
+      "type": "news_headline",
+      "source": "musterstadt-live.de",
+      "sourceVerified": false,
+      "content": "KOMMENTAR: Hört auf, Zeit zu verschwenden — zahlt einfach! 4 Millionen klingen viel, aber was kostet ein weiterer Tag Ausfall? Wasserversorgung, Strom, verunsicherte Bürger — das ist teurer. Andere Städte haben gezahlt und hatten ihre Systeme in 24 Stunden wieder. Hier gilt: pragmatisch denken, nicht ideologisch.",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 541,
+        "shares": 203,
+        "comments": 119
+      }
+    },
+    {
+      "id": "media_p5_rec_pressure_a",
+      "appearAfterSeconds": 175,
+      "type": "tweet",
+      "source": "BILD Regional",
+      "sourceVerified": true,
+      "content": "SKANDAL: Während Bürger um sauberes Wasser bangen, priorisiert die Stadtwerke-IT ihre eigenen Server und E-Mail-Systeme. Wasserversorgung muss SOFORT oberste Priorität haben — alles andere ist Verwaltungsversagen. #Stadtwerke #Trinkwasser #Versagen",
+      "isDisinformation": true,
+      "emotionalTone": "accusatory",
+      "engagementMetrics": {
+        "likes": 876,
+        "shares": 412,
+        "comments": 233
+      }
+    }
+  ]
+}

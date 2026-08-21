@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand colors - Refined Indigo-Blue scale */
+  --color-brand-50: #f0f4ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+  --color-brand-950: #1e1b4b;
+
+  /* App Background (Command Center feel) */
+  --color-app-bg: #182236;        /* midnight navy — noticeably lighter/warmer than pure Slate 900 */
+  --color-app-bg-accent: #1e2d4e; /* indigo-navy accent for depth */
+
+  /* Surface colors - High Contrast (White/Light Slate) */
+  --color-surface-0: #ffffff;
+  --color-surface-50: #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-300: #cbd5e1;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+
+  /* Severity: OK (Emerald) */
+  --color-ok-50: #ecfdf5;
+  --color-ok-100: #d1fae5;
+  --color-ok-200: #a7f3d0;
+  --color-ok-300: #6ee7b7;
+  --color-ok-400: #34d399;
+  --color-ok-500: #10b981;
+  --color-ok-600: #059669;
+  --color-ok-700: #047857;
+  --color-ok-800: #065f46;
+  --color-ok-900: #064e3b;
+
+  /* Severity: Warn (Amber/Orange) */
+  --color-warn-50: #fff7ed;
+  --color-warn-100: #ffedd5;
+  --color-warn-200: #fed7aa;
+  --color-warn-300: #fdba74;
+  --color-warn-400: #fb923c;
+  --color-warn-500: #f97316;
+  --color-warn-600: #ea580c;
+  --color-warn-700: #c2410c;
+  --color-warn-800: #9a3412;
+  --color-warn-900: #7c2d12;
+
+  /* Severity: Crit (Rose/Red) */
+  --color-crit-50: #fff1f2;
+  --color-crit-100: #ffe4e6;
+  --color-crit-200: #fecdd3;
+  --color-crit-300: #fda4af;
+  --color-crit-400: #fb7185;
+  --color-crit-500: #f43f5e;
+  --color-crit-600: #e11d48;
+  --color-crit-700: #be123c;
+  --color-crit-800: #9f1239;
+  --color-crit-900: #881337;
+
+  /* Font-Stacks - Modern Sans */
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Geist Mono", "Fira Code", monospace;
+
+  /* Shadows - Elevated & Subtle */
+  --shadow-panel: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 20px -5px var(--color-brand-400);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  /* ============================================================
+     Study UI (pre/post-game) — light, calm, professional.
+     Used by FormShell variant="light". The game stays dark.
+     ============================================================ */
+  --color-study-bg: #f3f5f9;             /* app background: soft cool gray */
+  --color-study-card: #ffffff;           /* main card surface */
+  --color-study-card-border: #e6e8ef;    /* hairline card border */
+  --color-study-nested: #f6f7fb;         /* nested info boxes / cards inside the card */
+  --color-study-nested-border: #e6e8ef;  /* nested border */
+  --color-study-text: #1c1e26;           /* primary heading/text */
+  --color-study-text-muted: #474c59;     /* body text */
+  --color-study-text-subtle: #6b7180;    /* hints / secondary */
+  --color-study-faint: #98a0b0;          /* faint meta */
+  --color-study-field-bg: #ffffff;       /* input background */
+  --color-study-field-border: #d3d7e0;   /* input border */
+  --shadow-study-card: 0 1px 2px rgba(16,24,40,0.04), 0 12px 32px -8px rgba(16,24,40,0.10);
+}
+
+/* Custom utility for glassmorphism */
+@utility glass-panel {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@utility app-gradient {
+  background: radial-gradient(ellipse at top center, var(--color-app-bg-accent) 0%, var(--color-app-bg) 65%);
+}
+
+/* Custom scrollbar styling */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-600) transparent;
+}
+
+@keyframes decision-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45); }
+  50%       { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+@keyframes timer-urgent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+@keyframes severity-glow {
+  0%, 100% { opacity: 0.7; }
+  50%       { opacity: 1; }
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-18px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) translateX(0px); }
+  33%       { transform: translateY(-12px) translateX(8px); }
+  66%       { transform: translateY(6px) translateX(-5px); }
+}
+
+/* Briefing alert-mode: grid threat pulse */
+@keyframes grid-threat-pulse {
+  0%, 100% { opacity: 0.15; }
+  50%       { opacity: 1; }
+}
+
+/* Briefing alert-mode: red ambient bloom */
+@keyframes bg-threat-bloom {
+  0%, 100% { opacity: 0.35; transform: scale(0.97); }
+  50%       { opacity: 1;    transform: scale(1.04); }
+}
+
+.briefing-grid-threat {
+  animation: grid-threat-pulse 5s ease-in-out infinite;
+}
+
+.briefing-bg-bloom {
+  animation: bg-threat-bloom 5s ease-in-out infinite;
+}
+
+/* Button loading: gradient flood fills button from left */
+@keyframes briefing-btn-fill {
+  0%   { transform: scaleX(0); opacity: 0.85; }
+  15%  { opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+
+/* Button loading: thin deterministic progress bar at bottom edge */
+@keyframes briefing-btn-progress {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+/* Button loading: diagonal sheen sweep over the gradient flood */
+@keyframes briefing-btn-sheen {
+  0%   { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+  30%  { opacity: 0.35; }
+  60%  { opacity: 0.18; }
+  100% { transform: translateX(250%) skewX(-15deg); opacity: 0; }
+}
+
+.briefing-btn-fill {
+  /* Deep-to-mid red gradient: crit-700 → crit-500 */
+  background: linear-gradient(
+    90deg,
+    rgba(190, 18, 60, 0.95) 0%,
+    rgba(244, 63, 94, 0.88) 100%
+  );
+  animation: briefing-btn-fill 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  transform-origin: left center;
+}
+
+/* Sheen layer — sits above the gradient flood */
+.briefing-btn-sheen {
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 70%
+  );
+  animation: briefing-btn-sheen 2s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  animation-delay: 0.15s;
+}
+
+/* Deterministic progress line at bottom edge */
+.briefing-btn-progress {
+  background: linear-gradient(
+    90deg,
+    rgba(253, 164, 175, 0.6) 0%,   /* crit-300, softer leading edge */
+    rgba(251, 113, 133, 1)   60%,   /* crit-400 */
+    rgba(255, 220, 230, 0.9) 100%   /* near-white tip */
+  );
+  animation: briefing-btn-progress 2s cubic-bezier(0.25, 0, 0.1, 1) forwards;
+  transform-origin: left center;
+}
+
+/* Briefing: light-to-dark transition veil */
+@keyframes study-to-sim-darken {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-darken-veil { animation: none !important; opacity: 1 !important; }
+}
+
+/* PostSurvey: dark-to-light transition veil (mirror of study-to-sim-darken) */
+@keyframes study-to-survey-lighten {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-lighten-veil { animation: none !important; opacity: 1 !important; }
+}
+
+/* Reduced-motion overrides: no movement, instant state */
+@media (prefers-reduced-motion: reduce) {
+  .briefing-btn-fill {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  .briefing-btn-sheen {
+    display: none;
+  }
+  .briefing-btn-progress {
+    animation: none;
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Webkit fallback for scrollbar-thin */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-surface-600, #4a4a4a);
+  border-radius: 3px;
+}
+
+/* TLX slider: thumb unsichtbar bis zur ersten Interaktion */
+.tlx-slider--unset::-webkit-slider-thumb {
+  opacity: 0;
+}
+.tlx-slider--unset::-moz-range-thumb {
+  opacity: 0;
+}
+.tlx-slider--unset::-webkit-slider-runnable-track {
+  opacity: 0.3;
+}
+.tlx-slider--unset::-moz-range-track {
+  opacity: 0.3;
+}
+

@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  cybercrisis:
+    build: .
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      # Persistent database storage
+      - cybercrisis-data:/app/data
+      # Optional: mount scenario files for hot-swap
+      # - ./scenarios:/app/scenarios:ro
+    environment:
+      NODE_ENV: production
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Please set ADMIN_API_KEY in .env}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3001}
+      FRONTEND_STATIC_PATH: /app/frontend-static
+      # RECONNECT_TIMEOUT_MS: 300000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  cybercrisis-data:
+    driver: local

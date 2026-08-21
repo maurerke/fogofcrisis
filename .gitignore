@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+
+# Runtime data (study database — never commit)
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+
+# Editor / tooling
+.idea/
+.vscode/
+
+# OS
+.DS_Store
